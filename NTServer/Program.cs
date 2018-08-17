@@ -40,19 +40,32 @@ namespace NTServer
             Console.WriteLine($"Accepted connection from {handler.RemoteEndPoint}");
 
             var data = "";
+            var buffer = new byte[1024];
 
-            while (true) {
-                var buffer = new byte[1024];
-                var bytesReceived = handler.Receive(buffer);
-                data += Encoding.UTF8.GetString(buffer.Take(bytesReceived).ToArray());
-                if (data.Contains(eof)) {
-                    await HandleXMLPartAsync(data);
-                    break;
+            using (NetworkStream stream = new NetworkStream(handler)) {
+                while (await stream.ReadAsync(buffer, 0, 1024) > 0) {
+                    data += Encoding.UTF8.GetString(buffer);
+                    buffer = new byte[1024];
                 }
+
+                Console.WriteLine(data);
             }
 
-            handler.Shutdown(SocketShutdown.Both);
-            handler.Close();
+            Console.ReadLine();
+
+            //while (true) {
+            //    var buffer = new byte[1024];
+            //    var bytesReceived = handler.Receive(buffer);
+            //    data += Encoding.UTF8.GetString(buffer.Take(bytesReceived).ToArray());
+            //    if (data.Contains(eof)) {
+            //        await HandleXMLPartAsync(data);
+            //        break;
+            //    }
+
+            //}
+
+            //handler.Shutdown(SocketShutdown.Both);
+            //handler.Close();
         }
 
         private static async Task HandleXMLPartAsync(string xml) {
